@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <algorithm>
 
 class Zawodnik {
     std::string firstName;
@@ -75,7 +76,7 @@ public:
 };
 
 class Mecz {
-    std::pair<StatystykiDruzyny, StatystykiDruzyny> stats; // Para przechowująca statystyki dla obu drużyn
+    std::pair<StatystykiDruzyny, StatystykiDruzyny> stats;
 
 public:
     Mecz() {}
@@ -203,7 +204,7 @@ public:
 };
 
 class Redaktor : public User {
-    std::vector<std::tuple<int, std::string, std::string>> zdarzenia; // Wektor przechowujący zdarzenia wraz z minutą i drużyną
+    std::vector<std::tuple<int, std::string, std::string>> zdarzenia;
 
 public:
     Redaktor(std::string username, std::string password)
@@ -271,9 +272,14 @@ public:
         std::cout << "Strzaly niecelne:\t" << statsA.getShotsOffTarget() << "\t\t\t" << statsB.getShotsOffTarget() << std::endl;
     }
 
-    void wyswietlZdarzenia(Redaktor& redaktor) {
+    void wyswietlPosortowaneZdarzenia(Redaktor& redaktor) {
         std::vector<std::tuple<int, std::string, std::string>> zdarzenia = redaktor.getEvents();
-        std::cout << "Zdarzenia meczu:\n" << std::endl;
+        std::sort(zdarzenia.begin(), zdarzenia.end(),
+            [](const std::tuple<int, std::string, std::string>& a, const std::tuple<int, std::string, std::string>& b) {
+                return std::get<0>(a) < std::get<0>(b);
+            });
+
+        std::cout << "\nPosortowane zdarzenia meczu:" << std::endl;
         std::cout << "Minuta\t\tDruzyna\t\tEvent" << std::endl;
         for (const auto& zdarzenie : zdarzenia) {
             int minute;
@@ -308,6 +314,7 @@ int main() {
     redaktor.addRedCardEvent(player2, match, "host", 20);
     redaktor.addShotOnTargetEvent(match, "host", 30);
     redaktor.addShotOffTargetEvent(match, "host", 40);
+    redaktor.addGoalEvent(player1, match, "host", 90);
 
     // Zdarzenia dla drużyny B
     redaktor.addGoalEvent(player3, match, "guest", 15);
@@ -318,7 +325,7 @@ int main() {
     // Wyświetlanie całkowitych statystyk meczu
     Czytelnik czytelnik("reader", "pass");
     czytelnik.wyswietlStatystykiMeczu(match);
-    czytelnik.wyswietlZdarzenia(redaktor);
+    czytelnik.wyswietlPosortowaneZdarzenia(redaktor);
 
     return 0;
 }
