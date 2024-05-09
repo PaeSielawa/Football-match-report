@@ -239,10 +239,24 @@ public:
 };
 
 class Czytelnik : public User {
-
 public:
-    Czytelnik(std::string username, std::string password)
+    Czytelnik(const std::string& username, const std::string& password)
         : User(username, password, "czytelnik") {}
+
+    void wyswietlStatystykiMeczu(Mecz& match) const {
+        auto statsA = match.getStats("gospodarz");
+        auto statsB = match.getStats("gosc");
+
+        std::cout << "Calkowite statystyki meczu:\n" << std::endl;
+        std::cout << "\t\t\tTeam A\t\t\tTeam B" << std::endl;
+        std::cout << "----------------------------------------------------------------" << std::endl;
+        std::cout << "Gole:\t\t\t" << statsA.getGoals() << "\t\t\t" << statsB.getGoals() << std::endl;
+        std::cout << "Czerwone kartki:\t" << statsA.getRedCards() << "\t\t\t" << statsB.getRedCards() << std::endl;
+        std::cout << "Zolte kartki:\t\t" << statsA.getYellowCards() << "\t\t\t" << statsB.getYellowCards() << std::endl;
+        std::cout << "Faule:\t\t\t" << statsA.getFouls() << "\t\t\t" << statsB.getFouls() << std::endl;
+        std::cout << "Strzaly celne:\t\t" << statsA.getShotsOnTarget() << "\t\t\t" << statsB.getShotsOnTarget() << std::endl;
+        std::cout << "Strzaly niecelne:\t" << statsA.getShotsOffTarget() << "\t\t\t" << statsB.getShotsOffTarget() << std::endl;
+    }
 };
 
 int main() {
@@ -264,6 +278,9 @@ int main() {
     // Tworzenie redaktora
     Redaktor redaktor("admin", "admin");
 
+    // Tworzenie czytelnika
+    Czytelnik czytelnik("reader", "reader123");
+
     // Zdarzenia dla drużyny A
     redaktor.addGoalEvent(player1, match, "gospodarz");
     redaktor.addRedCardEvent(player2, match, "gospodarz");
@@ -277,18 +294,7 @@ int main() {
     redaktor.addShotOffTargetEvent(match, "gosc");
 
     // Wyświetlanie całkowitych statystyk meczu
-    auto statsA = match.getStats("gospodarz");
-    auto statsB = match.getStats("gosc");
-
-    std::cout << "Calkowite statystyki meczu:\n" << std::endl;
-    std::cout << "\t\t\tTeam A\t\t\tTeam B" << std::endl;
-    std::cout << "----------------------------------------------------------------" << std::endl;
-    std::cout << "Gole:\t\t\t" << statsA.getGoals() << "\t\t\t" << statsB.getGoals() << std::endl;
-    std::cout << "Czerwone kartki:\t" << statsA.getRedCards() << "\t\t\t" << statsB.getRedCards() << std::endl;
-    std::cout << "Zolte kartki:\t\t" << statsA.getYellowCards() << "\t\t\t" << statsB.getYellowCards() << std::endl;
-    std::cout << "Faule:\t\t\t" << statsA.getFouls() << "\t\t\t" << statsB.getFouls() << std::endl;
-    std::cout << "Strzaly celne:\t\t" << statsA.getShotsOnTarget() << "\t\t\t" << statsB.getShotsOnTarget() << std::endl;
-    std::cout << "Strzaly niecelne:\t" << statsA.getShotsOffTarget() << "\t\t\t" << statsB.getShotsOffTarget() << std::endl;
+    czytelnik.wyswietlStatystykiMeczu(match);
 
     return 0;
 }
