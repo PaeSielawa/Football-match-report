@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include <string>
 #include <vector>
+#include <tuple>
 
 class Zawodnik {
     std::string firstName;
@@ -80,64 +81,64 @@ public:
     Mecz() {}
 
     void goalScored(std::string teamName) {
-        if (teamName == "gospodarz") {
+        if (teamName == "host") {
             stats.first.addGoal();
         }
-        else if (teamName == "gosc") {
+        else if (teamName == "guest") {
             stats.second.addGoal();
         }
     }
 
     void redCard(std::string teamName) {
-        if (teamName == "gospodarz") {
+        if (teamName == "host") {
             stats.first.addRedCard();
         }
-        else if (teamName == "gosc") {
+        else if (teamName == "guest") {
             stats.second.addRedCard();
         }
     }
 
     void yellowCard(std::string teamName) {
-        if (teamName == "gospodarz") {
+        if (teamName == "host") {
             stats.first.addYellowCard();
         }
-        else if (teamName == "gosc") {
+        else if (teamName == "guest") {
             stats.second.addYellowCard();
         }
     }
 
     void foul(std::string teamName) {
-        if (teamName == "gospodarz") {
+        if (teamName == "host") {
             stats.first.addFoul();
         }
-        else if (teamName == "gosc") {
+        else if (teamName == "guest") {
             stats.second.addFoul();
         }
     }
 
     void shotOnTarget(std::string teamName) {
-        if (teamName == "gospodarz") {
+        if (teamName == "host") {
             stats.first.addShotOnTarget();
         }
-        else if (teamName == "gosc") {
+        else if (teamName == "guest") {
             stats.second.addShotOnTarget();
         }
     }
 
     void shotOffTarget(std::string teamName) {
-        if (teamName == "gospodarz") {
+        if (teamName == "host") {
             stats.first.addShotOffTarget();
         }
-        else if (teamName == "gosc") {
+        else if (teamName == "guest") {
             stats.second.addShotOffTarget();
         }
     }
 
     StatystykiDruzyny getStats(std::string teamName) const {
-        if (teamName == "gospodarz") {
+        if (teamName == "host") {
             return stats.first;
         }
-        else if (teamName == "gosc") {
+        else if (teamName == "guest") {
             return stats.second;
         }
     }
@@ -202,50 +203,62 @@ public:
 };
 
 class Redaktor : public User {
+    std::vector<std::tuple<int, std::string, std::string>> zdarzenia; // Wektor przechowujący zdarzenia wraz z minutą i drużyną
 
 public:
     Redaktor(std::string username, std::string password)
         : User(username, password, "admin") {}
 
-    void addGoalEvent(Zawodnik& zawodnik, Mecz& match, std::string teamName) {
+    void addGoalEvent(Zawodnik& zawodnik, Mecz& match, std::string teamName, int minute) {
         Event event;
         event.goal(zawodnik, match, teamName);
+        zdarzenia.push_back(std::make_tuple(minute, teamName, "Gol"));
     }
 
-    void addRedCardEvent(Zawodnik& zawodnik, Mecz& match, std::string teamName) {
+    void addRedCardEvent(Zawodnik& zawodnik, Mecz& match, std::string teamName, int minute) {
         Event event;
         event.redCard(zawodnik, match, teamName);
+        zdarzenia.push_back(std::make_tuple(minute, teamName, "Czerwona kartka"));
     }
 
-    void addYellowCardEvent(Zawodnik& zawodnik, Mecz& match, std::string teamName) {
+    void addYellowCardEvent(Zawodnik& zawodnik, Mecz& match, std::string teamName, int minute) {
         Event event;
         event.yellowCard(zawodnik, match, teamName);
+        zdarzenia.push_back(std::make_tuple(minute, teamName, "Zolta kartka"));
     }
 
-    void addFoulEvent(Mecz& match, std::string teamName) {
+    void addFoulEvent(Mecz& match, std::string teamName, int minute) {
         Event event;
         event.foul(match, teamName);
+        zdarzenia.push_back(std::make_tuple(minute, teamName, "Faul"));
     }
 
-    void addShotOnTargetEvent(Mecz& match, std::string teamName) {
+    void addShotOnTargetEvent(Mecz& match, std::string teamName, int minute) {
         Event event;
         event.shotOnTarget(match, teamName);
+        zdarzenia.push_back(std::make_tuple(minute, teamName, "Strzal celny"));
     }
 
-    void addShotOffTargetEvent(Mecz& match, std::string teamName) {
+    void addShotOffTargetEvent(Mecz& match, std::string teamName, int minute) {
         Event event;
         event.shotOffTarget(match, teamName);
+        zdarzenia.push_back(std::make_tuple(minute, teamName, "Strzal niecelny"));
+    }
+
+    std::vector<std::tuple<int, std::string, std::string>> getEvents() const {
+        return zdarzenia;
     }
 };
 
 class Czytelnik : public User {
+
 public:
-    Czytelnik(const std::string& username, const std::string& password)
+    Czytelnik(std::string username, std::string password)
         : User(username, password, "czytelnik") {}
 
-    void wyswietlStatystykiMeczu(Mecz& match) const {
-        auto statsA = match.getStats("gospodarz");
-        auto statsB = match.getStats("gosc");
+    void wyswietlStatystykiMeczu(Mecz& match) {
+        auto statsA = match.getStats("host");
+        auto statsB = match.getStats("guest");
 
         std::cout << "Calkowite statystyki meczu:\n" << std::endl;
         std::cout << "\t\t\tTeam A\t\t\tTeam B" << std::endl;
@@ -256,6 +269,18 @@ public:
         std::cout << "Faule:\t\t\t" << statsA.getFouls() << "\t\t\t" << statsB.getFouls() << std::endl;
         std::cout << "Strzaly celne:\t\t" << statsA.getShotsOnTarget() << "\t\t\t" << statsB.getShotsOnTarget() << std::endl;
         std::cout << "Strzaly niecelne:\t" << statsA.getShotsOffTarget() << "\t\t\t" << statsB.getShotsOffTarget() << std::endl;
+    }
+
+    void wyswietlZdarzenia(Redaktor& redaktor) {
+        std::vector<std::tuple<int, std::string, std::string>> zdarzenia = redaktor.getEvents();
+        std::cout << "Zdarzenia meczu:\n" << std::endl;
+        std::cout << "Minuta\t\tDruzyna\t\tEvent" << std::endl;
+        for (const auto& zdarzenie : zdarzenia) {
+            int minute;
+            std::string teamName, eventType;
+            std::tie(minute, teamName, eventType) = zdarzenie;
+            std::cout << minute << "\t\t" << teamName << "\t\t" << eventType << std::endl;
+        }
     }
 };
 
@@ -269,8 +294,8 @@ int main() {
     // Tworzenie drużyn
     std::vector<Zawodnik> teamAPlayers = { player1, player2 };
     std::vector<Zawodnik> teamBPlayers = { player3, player4 };
-    Druzyna teamA(teamAPlayers, "gospodarz");
-    Druzyna teamB(teamBPlayers, "gosc");
+    Druzyna teamA(teamAPlayers, "host");
+    Druzyna teamB(teamBPlayers, "guest");
 
     // Tworzenie meczu
     Mecz match;
@@ -278,23 +303,22 @@ int main() {
     // Tworzenie redaktora
     Redaktor redaktor("admin", "admin");
 
-    // Tworzenie czytelnika
-    Czytelnik czytelnik("reader", "reader123");
-
     // Zdarzenia dla drużyny A
-    redaktor.addGoalEvent(player1, match, "gospodarz");
-    redaktor.addRedCardEvent(player2, match, "gospodarz");
-    redaktor.addShotOnTargetEvent(match, "gospodarz");
-    redaktor.addShotOffTargetEvent(match, "gospodarz");
+    redaktor.addGoalEvent(player1, match, "host", 10);
+    redaktor.addRedCardEvent(player2, match, "host", 20);
+    redaktor.addShotOnTargetEvent(match, "host", 30);
+    redaktor.addShotOffTargetEvent(match, "host", 40);
 
     // Zdarzenia dla drużyny B
-    redaktor.addGoalEvent(player3, match, "gosc");
-    redaktor.addRedCardEvent(player4, match, "gosc");
-    redaktor.addShotOnTargetEvent(match, "gosc");
-    redaktor.addShotOffTargetEvent(match, "gosc");
+    redaktor.addGoalEvent(player3, match, "guest", 15);
+    redaktor.addRedCardEvent(player4, match, "guest", 25);
+    redaktor.addShotOnTargetEvent(match, "guest", 35);
+    redaktor.addShotOffTargetEvent(match, "guest", 45);
 
     // Wyświetlanie całkowitych statystyk meczu
+    Czytelnik czytelnik("reader", "pass");
     czytelnik.wyswietlStatystykiMeczu(match);
+    czytelnik.wyswietlZdarzenia(redaktor);
 
     return 0;
 }
